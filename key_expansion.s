@@ -6,10 +6,10 @@
 .align	16	,0x90
 .globl	AES_128_Key_Expansion
 AES_128_Key_Expansion:
-	movl	$10				, 240(%rsi)
+#	movl	$10				, 240(%rsi)
 	movdqu	(%rdi)			, %xmm1
 	movdqa	%xmm1			, (%rsi)
-	ASSISTS:
+ASSISTS:
 	aeskeygenassist	$1		, %xmm1	, %xmm2
 	call	PREPARE_ROUNDKEY_128
 	movdqa	%xmm1			, 16(%rsi)
@@ -41,7 +41,7 @@ AES_128_Key_Expansion:
 	call	PREPARE_ROUNDKEY_128
 	movdqa	%xmm1			, 160(%rsi)
 	ret
-	PREPARE_ROUNDKEY_128:
+PREPARE_ROUNDKEY_128:
 	pshufd	$255			, %xmm2	, %xmm2
 	movdqa	%xmm1			, %xmm3
 	pslldq	$4				, %xmm3
