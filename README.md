@@ -27,5 +27,71 @@ flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36
 
 
 
-Intrinsics:
+```c++
+#include	"Intrinsic.h"
+#define	Nr	10
+```
+
+### Encode
+
+
+
+```c++
+unsigned char 
+providedKey[ 16 ];
+
+ALIGN16	__m128i
+encryptKey[ Nr + 1 ];
+AES_128_Key_Expansion( (__m128i*)providedKey, encryptKey );
+
+#define	BUF_SIZE	1024
+UI1	buffer[ BUF_SIZE ];
+while ( true ) {
+	auto numRead = (size_t)read( 0, buffer, BUF_SIZE );
+	if ( !numRead ) break;
+	UI1	encoded[ numRead ];
+	AES_ECB_encrypt(
+		buffer
+	,	encoded
+	,	numRead
+	,	encryptKey
+	,	Nr
+	);
+	write( 1, encoded, numRead );
+}
+
+```
+
+### Decode
+
+```c++
+unsigned char 
+providedKey[ 16 ];
+
+ALIGN16	__m128i
+encryptKey[ Nr + 1 ];
+AES_128_Key_Expansion( (__m128i*)providedKey, encryptKey );
+
+ALIGN16	__m128i
+decryptKey[ Nr + 1 ];
+AES_decrypt_key_128( encryptKey, decryptKey ); 
+
+#define	BUF_SIZE	1024
+UI1	buffer[ BUF_SIZE ];
+while ( true ) {
+	auto numRead = (size_t)read( 0, buffer, BUF_SIZE );
+	if ( !numRead ) break;
+	UI1	decoded[ numRead ];
+	AES_ECB_decrypt(
+		buffer
+	,	decoded
+	,	numRead
+	,	decryptKey
+	,	Nr
+	);
+	write( 1, decoded, numRead );
+}
+
+
+```
 
