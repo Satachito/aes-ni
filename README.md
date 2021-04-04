@@ -96,3 +96,82 @@ while ( true ) {
 
 ```
 
+# Functions
+
+```
+inline void
+AES_128_Key_Expansion( __m128i* userkey, __m128i* key );
+inline void
+AES_decrypt_key_128(
+	__m128i* encryptKey
+,	__m128i* decryptKey
+);
+
+inline void
+AES_192_Key_Expansion( __m128i* userkey, __m128i* key );
+inline void
+AES_decrypt_key_192(
+	__m128i* encryptKey
+,	__m128i* decryptKey
+);
+
+inline void
+AES_256_Key_Expansion( __m128i* userkey, __m128i* key );
+inline void
+AES_decrypt_key_256(
+	__m128i* encryptKey
+,	__m128i* decryptKey
+);
+
+inline void
+AES_ECB_encrypt(
+	UI1*		in		//pointer to the PLAINTEXT
+,	UI1*		out		//pointer to the CIPHERTEXT buffer
+,	size_t		length	//text length in bytes
+,	__m128i*	key		//pointer to the expanded key schedule
+,	int			Nr		//number of AES rounds 10,12 or 14
+);
+inline void
+AES_ECB_decrypt(
+	UI1*		in		//pointer to the CIPHERTEXT
+,	UI1*		out		//pointer to the DECRYPTED TEXT buffer
+,	size_t		length	//text length in bytes
+,	__m128i*	key		//pointer to the expanded key schedule
+,	int			Nr		//number of AES rounds 10,12 or 14
+);
+
+inline void
+AES_CBC_encrypt(
+	UI1*		in
+,	UI1*		out
+,	UI1*		ivec
+,	size_t		length
+,	__m128i*	key
+,	int			Nr
+);
+inline void
+AES_CBC_decrypt(
+	UI1*		in
+,	UI1*		out
+,	UI1*		ivec
+,	size_t		length
+,	__m128i*	key
+,	int			Nr
+);
+
+inline void
+AES_CTR_crypt(
+	UI1*		in
+,	UI1*		out
+,	UI1*		ivec
+,	UI1*		nonce
+,	size_t		length
+,	__m128i*	key
+,	int			Nr
+);
+
+inline int
+Check_CPU_support_AES();
+
+```
+
