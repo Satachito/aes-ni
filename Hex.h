@@ -9,9 +9,9 @@ HexNum( const char $ ) {
 }
 inline vector< unsigned char >
 DecodeHex( const string& $ ) {
-	vector< unsigned char >	_;
-	for ( auto& $: $ ) _.emplace_back( HexNum( $ ) << 4 | HexNum( $ ) );
-	return _;
+	vector< unsigned char >	$$;
+	for ( auto _ = 0; _ < $.size(); _ += 2 ) $$.emplace_back( HexNum( $[ _ ] ) << 4 | HexNum( $[ _ + 1 ] ) );
+	return $$;
 }
 
 inline char
