@@ -21,7 +21,7 @@ diff Intrinsic.cpp /tmp/z
 rm a.out
 
 echo CTR
-g++ -DCTR -std=c++17 -maes Intrinsic.cpp
+g++ -DCTR -std=c++17 -maes -msse4.1 Intrinsic.cpp
 rm /tmp/x /tmp/y /tmp/z
 ./a.out 0bee89b07a248e27c83fc3d5951213c1 < Intrinsic.cpp > /tmp/x
 diff Intrinsic.cpp /tmp/x
