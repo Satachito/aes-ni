@@ -20,7 +20,8 @@ flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36
 ## Intrinsic
 
 ### MacOS
-
+### Ubuntu 20.04LTS
+### Amazon Linux
 
 
 # Usage:
