@@ -72,7 +72,7 @@ ECB256_EXPECTED[] = {
 #include	<string>
 #include	<vector>
 using namespace std;
-#include	"Hex.h"
+#include	"../Hex.h"
 
 void
 Test(
