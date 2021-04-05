@@ -1,32 +1,43 @@
+
+SIZE=`wc -c _.txt | awk '{print $1}'`
+
 echo ECB
-g++ -DECB -std=c++17 -maes Intrinsic.cpp
-rm /tmp/x /tmp/y /tmp/z
-./a.out 0bee89b07a248e27c83fc3d5951213c1 < Intrinsic.cpp > /tmp/x
-diff Intrinsic.cpp /tmp/x
-./a.out ba77240f69ce746e8dd7d7579107959ea2a64828e6f9d7f1 < Intrinsic.cpp > /tmp/y
-diff Intrinsic.cpp /tmp/y
-./a.out fed79e6c15588f7e2e219baca34c93332dc65dabe6ba231272bec8f981db4595 < Intrinsic.cpp > /tmp/z
-diff Intrinsic.cpp /tmp/z
-rm a.out
+g++ -DECB -DENC -std=c++17 -maes Intrinsic.cpp -o enc
+g++ -DECB -DDEC -std=c++17 -maes Intrinsic.cpp -o dec
+./enc 0bee89b07a248e27c83fc3d5951213c1 < _.txt > /tmp/x
+./dec 0bee89b07a248e27c83fc3d5951213c1 $SIZE < /tmp/x > /tmp/y
+diff _.txt /tmp/y
+./enc ba77240f69ce746e8dd7d7579107959ea2a64828e6f9d7f1 < _.txt > /tmp/x
+./dec ba77240f69ce746e8dd7d7579107959ea2a64828e6f9d7f1 $SIZE < /tmp/x > /tmp/y
+diff _.txt /tmp/y
+./enc fed79e6c15588f7e2e219baca34c93332dc65dabe6ba231272bec8f981db4595 < _.txt > /tmp/x
+./dec fed79e6c15588f7e2e219baca34c93332dc65dabe6ba231272bec8f981db4595 $SIZE < /tmp/x > /tmp/y
+diff _.txt /tmp/y
 
 echo CBC
-g++ -DCBC -std=c++17 -maes Intrinsic.cpp
-rm /tmp/x /tmp/y /tmp/z
-./a.out 0bee89b07a248e27c83fc3d5951213c1 < Intrinsic.cpp > /tmp/x
-diff Intrinsic.cpp /tmp/x
-./a.out ba77240f69ce746e8dd7d7579107959ea2a64828e6f9d7f1 < Intrinsic.cpp > /tmp/y
-diff Intrinsic.cpp /tmp/y
-./a.out fed79e6c15588f7e2e219baca34c93332dc65dabe6ba231272bec8f981db4595 < Intrinsic.cpp > /tmp/z
-diff Intrinsic.cpp /tmp/z
-rm a.out
+g++ -DCBC -DENC -std=c++17 -maes Intrinsic.cpp -o enc
+g++ -DCBC -DDEC -std=c++17 -maes Intrinsic.cpp -o dec
+./enc 0bee89b07a248e27c83fc3d5951213c1 < _.txt > /tmp/x
+./dec 0bee89b07a248e27c83fc3d5951213c1 $SIZE < /tmp/x > /tmp/y
+diff _.txt /tmp/y
+./enc ba77240f69ce746e8dd7d7579107959ea2a64828e6f9d7f1 < _.txt > /tmp/x
+./dec ba77240f69ce746e8dd7d7579107959ea2a64828e6f9d7f1 $SIZE < /tmp/x > /tmp/y
+diff _.txt /tmp/y
+./enc fed79e6c15588f7e2e219baca34c93332dc65dabe6ba231272bec8f981db4595 < _.txt > /tmp/x
+./dec fed79e6c15588f7e2e219baca34c93332dc65dabe6ba231272bec8f981db4595 $SIZE < /tmp/x > /tmp/y
+diff _.txt /tmp/y
 
 echo CTR
-g++ -DCTR -std=c++17 -maes -msse4.1 Intrinsic.cpp
-rm /tmp/x /tmp/y /tmp/z
-./a.out 0bee89b07a248e27c83fc3d5951213c1 < Intrinsic.cpp > /tmp/x
-diff Intrinsic.cpp /tmp/x
-./a.out ba77240f69ce746e8dd7d7579107959ea2a64828e6f9d7f1 < Intrinsic.cpp > /tmp/y
-diff Intrinsic.cpp /tmp/y
-./a.out fed79e6c15588f7e2e219baca34c93332dc65dabe6ba231272bec8f981db4595 < Intrinsic.cpp > /tmp/z
-diff Intrinsic.cpp /tmp/z
-rm a.out
+g++ -DCTR -DENC -std=c++17 -maes Intrinsic.cpp -o enc
+g++ -DCTR -DDEC -std=c++17 -maes Intrinsic.cpp -o dec
+./enc 0bee89b07a248e27c83fc3d5951213c1 < _.txt > /tmp/x
+./dec 0bee89b07a248e27c83fc3d5951213c1 $SIZE < /tmp/x > /tmp/y
+diff _.txt /tmp/y
+./enc ba77240f69ce746e8dd7d7579107959ea2a64828e6f9d7f1 < _.txt > /tmp/x
+./dec ba77240f69ce746e8dd7d7579107959ea2a64828e6f9d7f1 $SIZE < /tmp/x > /tmp/y
+diff _.txt /tmp/y
+./enc fed79e6c15588f7e2e219baca34c93332dc65dabe6ba231272bec8f981db4595 < _.txt > /tmp/x
+./dec fed79e6c15588f7e2e219baca34c93332dc65dabe6ba231272bec8f981db4595 $SIZE < /tmp/x > /tmp/y
+diff _.txt /tmp/y
+
+rm enc dec

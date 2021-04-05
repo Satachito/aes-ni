@@ -14,7 +14,7 @@ using namespace std;
 void
 Main( int argc, char** argv ) {
 
-	if ( argc != 2 ) {
+	if ( argc < 2 ) {
 		cerr << "Usage: " << argv[ 0 ] << " key(in hex string)" << endl;
 		exit( 1 );
 	}
@@ -24,6 +24,7 @@ Main( int argc, char** argv ) {
 		exit( 2 );
 	}
 
+	auto size	= argc > 2 ? atoi( argv[ 2 ] ) : 0;
 	auto key	= DecodeHex( argv[ 1 ] ); 
 
 	auto nBits	= key.size() * 8;
@@ -48,10 +49,18 @@ Main( int argc, char** argv ) {
 		exit( 3 );
 	}
 
-	UI1	IV[]	= { 0xC0,0x54,0x3B,0x59,0xDA,0x48,0xD9,0x0B };
+#ifdef	CBC
+	ALIGN16 UI1
+	IV_CBC[]	= { 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f };
+#endif
 #ifdef	CTR
-	UI1	NONCE[]	= { 0x00,0x6C,0xB6,0xDB };
-#else
+	ALIGN16 UI1
+	NONCE[]		= { 0x00,0x6C,0xB6,0xDB };
+	ALIGN16 UI1
+	IV_CTR[]	= { 0xC0,0x54,0x3B,0x59,0xDA,0x48,0xD9,0x0B };
+#endif
+
+#if	( defined( ECB ) || defined( CBC ) ) && defined( DEC )
 	ALIGN16	__m128i
 	decryptKey[ Nr + 1 ];
 
@@ -60,73 +69,98 @@ Main( int argc, char** argv ) {
 	case 192:	AES_decrypt_key_192( encryptKey, decryptKey ); break;
 	case 256:	AES_decrypt_key_256( encryptKey, decryptKey ); break;
 	}
-
 #endif
-	#define	BUF_SIZE	1024
-	UI1	buffer[ BUF_SIZE ];
+
+#ifdef	BUF_SIZE
+	if ( BUF_SIZE % 16 ) {
+		cerr << "BUF_SIZE must be 16 * N" << endl;
+		exit( 4 );
+	}
+#else
+	#define	BUF_SIZE	1024	//	Must be 16 * N
+#endif
+
+	size_t	nBytes = 0;
+
 	while ( true ) {
-		auto numRead = (size_t)read( 0, buffer, BUF_SIZE );
-		if ( !numRead ) break;
-		UI1	encoded[ numRead ];
-		UI1	decoded[ numRead ];
+		UI1	buffer[ BUF_SIZE ];
+		auto nRead = (size_t)read( 0, buffer, BUF_SIZE );
+		if ( !nRead ) break;
+		auto nCrypto = ( nRead + 15 ) / 16 * 16;
+		UI1	coded[ nCrypto ];
+
 #ifdef	CTR
 		AES_CTR_crypt(
 			buffer
-		,	encoded
-		,	IV
+		,	coded
+		,	IV_CTR
 		,	NONCE
-		,	numRead
+		,	nCrypto
 		,	encryptKey
 		,	Nr
 		);
-		AES_CTR_crypt(
-			encoded
-		,	decoded
-		,	IV
-		,	NONCE
-		,	numRead
-		,	encryptKey
-		,	Nr
-		);
+cerr << EncodeHex( IV_CTR, 8 ) << endl;
+	#ifdef	ENC
+//		for ( auto _ = 0; _ < 16; _++ ) IV_CTR[ _ ] = coded[ nRead - 16 + _ ];
+	#endif
+	#ifdef	DEC
+//		for ( auto _ = 0; _ < 16; _++ ) IV_CTR[ _ ] = buffer[ nCrypto - 16 + _ ];
+	#endif
 #endif
 #ifdef	CBC
+	#ifdef	ENC
 		AES_CBC_encrypt(
 			buffer
-		,	encoded
-		,	IV
-		,	numRead
+		,	coded
+		,	IV_CBC
+		,	nCrypto
 		,	encryptKey
 		,	Nr
 		);
+		for ( auto _ = 0; _ < 16; _++ ) IV_CBC[ _ ] = coded[ nRead - 16 + _ ];
+	#endif
+	#ifdef	DEC
 		AES_CBC_decrypt(
-			encoded
-		,	decoded
-		,	IV
-		,	numRead
+			buffer
+		,	coded
+		,	IV_CBC
+		,	nCrypto
 		,	decryptKey
 		,	Nr
 		);
+		for ( auto _ = 0; _ < 16; _++ ) IV_CBC[ _ ] = buffer[ nCrypto - 16 + _ ];
+	#endif
 #endif
 #ifdef	ECB
+	#ifdef	ENC
 		AES_ECB_encrypt(
 			buffer
-		,	encoded
-		,	numRead
+		,	coded
+		,	nCrypto
 		,	encryptKey
 		,	Nr
 		);
+	#endif
+	#ifdef	DEC
 		AES_ECB_decrypt(
-			encoded
-		,	decoded
-		,	numRead
+			buffer
+		,	coded
+		,	nCrypto
 		,	decryptKey
 		,	Nr
 		);
+	#endif
 #endif
-		write( 1, decoded, numRead );
+		auto nWrite = size && nBytes + nCrypto > size ? size - nBytes : nCrypto;
+		if ( write( 1, coded, nWrite ) != nWrite ) throw "Write Error";
+		nBytes += nWrite;
+
+//cerr << size << ':' << nRead << ':' << nCrypto << ':' << nWrite << endl;
+//if ( nRead < BUF_SIZE ) cerr << EncodeHex( buffer, nCrypto ) << endl;
+//if ( nRead < BUF_SIZE ) cerr << EncodeHex( coded, nCrypto ) << endl;
 	}
 }
-
+  
 int
 main( int argc, char** argv ) {
 	try { Main( argc, argv ); } catch ( const char* _ ) { cerr << _ << endl; }
