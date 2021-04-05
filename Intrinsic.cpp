@@ -99,7 +99,7 @@ Main( int argc, char** argv ) {
 		,	encryptKey
 		,	Nr
 		);
-cerr << EncodeHex( IV_CTR, 8 ) << endl;
+//	cerr << EncodeHex( IV_CTR, 8 ) << endl;
 	#ifdef	ENC
 //		for ( auto _ = 0; _ < 16; _++ ) IV_CTR[ _ ] = coded[ nRead - 16 + _ ];
 	#endif
