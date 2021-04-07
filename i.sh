@@ -2,8 +2,8 @@
 SIZE=`wc -c _.txt | awk '{print $1}'`
 
 echo ECB
-g++ -DECB -DENC -std=c++17 -maes Intrinsic.cpp -o enc
-g++ -DECB -DDEC -std=c++17 -maes Intrinsic.cpp -o dec
+g++ -DECB -DENC -std=c++17 -maes -msse4.1 Intrinsic.cpp -o enc
+g++ -DECB -DDEC -std=c++17 -maes -msse4.1 Intrinsic.cpp -o dec
 ./enc 0bee89b07a248e27c83fc3d5951213c1 < _.txt > /tmp/x
 ./dec 0bee89b07a248e27c83fc3d5951213c1 $SIZE < /tmp/x > /tmp/y
 diff _.txt /tmp/y
@@ -15,8 +15,8 @@ diff _.txt /tmp/y
 diff _.txt /tmp/y
 
 echo CBC
-g++ -DCBC -DENC -std=c++17 -maes Intrinsic.cpp -o enc
-g++ -DCBC -DDEC -std=c++17 -maes Intrinsic.cpp -o dec
+g++ -DCBC -DENC -std=c++17 -maes -msse4.1 Intrinsic.cpp -o enc
+g++ -DCBC -DDEC -std=c++17 -maes -msse4.1 Intrinsic.cpp -o dec
 ./enc 0bee89b07a248e27c83fc3d5951213c1 < _.txt > /tmp/x
 ./dec 0bee89b07a248e27c83fc3d5951213c1 $SIZE < /tmp/x > /tmp/y
 diff _.txt /tmp/y
@@ -28,8 +28,8 @@ diff _.txt /tmp/y
 diff _.txt /tmp/y
 
 echo CTR
-g++ -DCTR -DENC -std=c++17 -maes Intrinsic.cpp -o enc
-g++ -DCTR -DDEC -std=c++17 -maes Intrinsic.cpp -o dec
+g++ -DCTR -DENC -std=c++17 -maes -msse4.1 Intrinsic.cpp -o enc
+g++ -DCTR -DDEC -std=c++17 -maes -msse4.1 Intrinsic.cpp -o dec
 ./enc 0bee89b07a248e27c83fc3d5951213c1 < _.txt > /tmp/x
 ./dec 0bee89b07a248e27c83fc3d5951213c1 $SIZE < /tmp/x > /tmp/y
 diff _.txt /tmp/y
