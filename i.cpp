@@ -1,7 +1,7 @@
-//	4/4/2021 Written by Satoru Ogura.	
+//	Apr. 2021 Written by Satoru Ogura.	
 //	https://www.intel.com/content/dam/doc/white-paper/advanced-encryption-standard-new-instructions-set-paper.pdf
 
-#include	"Intrinsic.h"
+#include	"AES-NI.h"
 
 using namespace std;
 #include	<iostream>
@@ -14,30 +14,31 @@ using namespace std;
 void
 Main( int argc, char** argv ) {
 
-	if ( argc < 2 ) {
-		cerr << "Usage: " << argv[ 0 ] << " key(in hex string)" << endl;
-		exit( 1 );
-	}
-
 	if ( !Check_CPU_support_AES() ) {
 		cerr << "This program needs AES support" << endl;
 		exit( 2 );
 	}
 
-	auto size	= argc > 2 ? atoi( argv[ 2 ] ) : 0;
+	if ( argc < 3 ) {
+		cerr << "Usage: " << argv[ 0 ] << " key(in hex string) IV(in hex string)" << endl;
+		exit( 1 );
+	}
+
 	auto key	= DecodeHex( argv[ 1 ] ); 
+	auto IV		= DecodeHex( argv[ 2 ] ); 
+	auto size	= argc > 3 ? atoi( argv[ 3 ] ) : 0;
 
 	auto nBits	= key.size() * 8;
 	auto Nk		= nBits / 32;
 	auto Nr		= Nk + 6;
 
 	ALIGN16	__m128i
-	encryptKey[ Nr + 1 ];
+	encryptoKey[ Nr + 1 ];
 
 	switch ( nBits ) {
-	case 128:	AES_128_Key_Expansion( (__m128i*)&key[ 0 ], encryptKey );	break;
-	case 192:	AES_192_Key_Expansion( (__m128i*)&key[ 0 ], encryptKey );	break;
-	case 256:	AES_256_Key_Expansion( (__m128i*)&key[ 0 ], encryptKey );	break;
+	case 128:	AES_128_Key_Expansion( (__m128i*)&key[ 0 ], encryptoKey );	break;
+	case 192:	AES_192_Key_Expansion( (__m128i*)&key[ 0 ], encryptoKey );	break;
+	case 256:	AES_256_Key_Expansion( (__m128i*)&key[ 0 ], encryptoKey );	break;
 	default	:
 		cerr
 			<< "Key length must be 128, 192 or 256, length of the given key("
@@ -49,25 +50,14 @@ Main( int argc, char** argv ) {
 		exit( 3 );
 	}
 
-#ifdef	CBC
-	ALIGN16 UI1
-	IV_CBC[]	= { 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f };
-#endif
-#ifdef	CTR
-	ALIGN16 UI1
-	NONCE[]		= { 0x00,0x6C,0xB6,0xDB };
-	ALIGN16 UI1
-	IV_CTR[]	= { 0xC0,0x54,0x3B,0x59,0xDA,0x48,0xD9,0x0B };
-#endif
-
 #if	( defined( ECB ) || defined( CBC ) ) && defined( DEC )
 	ALIGN16	__m128i
-	decryptKey[ Nr + 1 ];
+	decryptoKey[ Nr + 1 ];
 
 	switch ( nBits ) {
-	case 128:	AES_decrypt_key_128( encryptKey, decryptKey ); break;
-	case 192:	AES_decrypt_key_192( encryptKey, decryptKey ); break;
-	case 256:	AES_decrypt_key_256( encryptKey, decryptKey ); break;
+	case 128:	AES_decrypto_key_128( encryptoKey, decryptoKey ); break;
+	case 192:	AES_decrypto_key_192( encryptoKey, decryptoKey ); break;
+	case 256:	AES_decrypto_key_256( encryptoKey, decryptoKey ); break;
 	}
 #endif
 
@@ -83,63 +73,63 @@ Main( int argc, char** argv ) {
 	size_t	nBytes = 0;
 
 	while ( true ) {
-		UI1	buffer[ BUF_SIZE ];
+		unsigned char	buffer[ BUF_SIZE ];
 		auto nRead = (size_t)read( 0, buffer, BUF_SIZE );
 		if ( !nRead ) break;
-		auto nCrypto = ( nRead + 15 ) / 16 * 16;
-		UI1	coded[ nCrypto ];
+		auto nBlocks = ( nRead + 15 ) / 16;
+		auto nCrypto = nBlocks * 16;
+		unsigned char	coded[ nCrypto ];
 
 #ifdef	CTR
-		AES_CTR_crypt(
+		cerr << EncodeHex( IV ) << endl;
+		AES_CTR_crypto(
 			buffer
 		,	coded
-		,	IV_CTR
-		,	NONCE
-		,	nCrypto
-		,	encryptKey
+		,	(__m128i*)&IV[ 0 ]
+		,	nBlocks
+		,	encryptoKey
 		,	Nr
 		);
 #endif
 #ifdef	CBC
+	cerr << EncodeHex( IV ) << endl;
 	#ifdef	ENC
-		AES_CBC_encrypt(
+		AES_CBC_encrypto(
 			buffer
 		,	coded
-		,	IV_CBC
-		,	nCrypto
-		,	encryptKey
+		,	(__m128i*)&IV[ 0 ]
+		,	nBlocks
+		,	encryptoKey
 		,	Nr
 		);
-		for ( auto _ = 0; _ < 16; _++ ) IV_CBC[ _ ] = coded[ nRead - 16 + _ ];
 	#endif
 	#ifdef	DEC
-		AES_CBC_decrypt(
+		AES_CBC_decrypto(
 			buffer
 		,	coded
-		,	IV_CBC
-		,	nCrypto
-		,	decryptKey
+		,	(__m128i*)&IV[ 0 ]
+		,	nBlocks
+		,	decryptoKey
 		,	Nr
 		);
-		for ( auto _ = 0; _ < 16; _++ ) IV_CBC[ _ ] = buffer[ nCrypto - 16 + _ ];
 	#endif
 #endif
 #ifdef	ECB
 	#ifdef	ENC
-		AES_ECB_encrypt(
+		AES_ECB_encrypto(
 			buffer
 		,	coded
-		,	nCrypto
-		,	encryptKey
+		,	nBlocks
+		,	encryptoKey
 		,	Nr
 		);
 	#endif
 	#ifdef	DEC
-		AES_ECB_decrypt(
+		AES_ECB_decrypto(
 			buffer
 		,	coded
-		,	nCrypto
-		,	decryptKey
+		,	nBlocks
+		,	decryptoKey
 		,	Nr
 		);
 	#endif

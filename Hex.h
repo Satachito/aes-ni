@@ -1,3 +1,11 @@
+#pragma once
+
+//	Jun. 2021 Written by Satoru Ogura.
+
+#include	<vector>
+#include	<string>
+using namespace std;
+
 inline unsigned char
 HexNum( const char $ ) {
 	switch ( $ ) {
@@ -26,7 +34,7 @@ HexChar( unsigned char $ ) {
 }
 inline string
 HexStr( unsigned char $ ) {
-	char _[] = {
+	char	_[] = {
 		HexChar( ( $ >> 4 ) & 0x0f )
 	,	HexChar( $ & 0x0f )
 	,	0
@@ -35,13 +43,30 @@ HexStr( unsigned char $ ) {
 }
 inline string
 EncodeHex( const vector< unsigned char >& $ ) {
-	string _;
-	for ( auto& $: $ ) _ += HexStr( $ );
-	return _;
+	string	$$;
+	for ( auto& _: $ ) $$ += HexStr( _ );
+	return $$;
 }
 inline string
-EncodeHex( unsigned char* $, int length ) {
-	vector< unsigned char >	_( length );
-	for ( auto i = 0; i < length; i++ ) _[ i ] = $[ i ];
-	return EncodeHex( _ );
+EncodeHex( unsigned char* _, unsigned char* $ ) {
+	return EncodeHex( vector< unsigned char >( _, $ ) );
 }
+inline string
+EncodeHex( unsigned char* _, unsigned long $ ) {
+	return EncodeHex( _, _ + $ );
+}
+inline string
+EncodeHexLF16( unsigned char* _, unsigned char* $ ) {
+	string	$$;
+	for ( auto count = 0; _ < $; _ += 16 ) {
+		auto nRemain = $ - _;
+		$$ += to_string( count++ ) + ':' + EncodeHex( _, _ + ( nRemain < 16 ? nRemain : 16 ) ) + '\n';
+	}
+	return $$;
+}
+inline string
+EncodeHexLF16( unsigned char* _, unsigned long $ ) {
+	return EncodeHexLF16( _, _ + $ );
+}
+
+
