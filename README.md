@@ -44,5 +44,13 @@ Tested in environments below.
 
 ### i.sh
 
-	Shell for the test program.
+	Shell to compile and run i.cpp.
+
+### Nist.cpp
+
+	Test program by NIST data.
+
+### Nist.sh
+
+	Shell to compile and run Nist.cpp
 
