@@ -81,7 +81,7 @@ Main( int argc, char** argv ) {
 		unsigned char	coded[ nCrypto ];
 
 #ifdef	CTR
-		cerr << EncodeHex( IV ) << endl;
+	//	cerr << EncodeHex( IV ) << endl;
 		AES_CTR_crypto(
 			buffer
 		,	coded
@@ -92,7 +92,7 @@ Main( int argc, char** argv ) {
 		);
 #endif
 #ifdef	CBC
-	cerr << EncodeHex( IV ) << endl;
+	//	cerr << EncodeHex( IV ) << endl;
 	#ifdef	ENC
 		AES_CBC_encrypto(
 			buffer
