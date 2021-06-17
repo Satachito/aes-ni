@@ -1,3 +1,4 @@
+cp Nist.cpp _.txt
 SIZE=`wc -c _.txt | awk '{print $1}'`
 
 IV=f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff
