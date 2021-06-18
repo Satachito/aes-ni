@@ -2,11 +2,8 @@ name: Build
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
-  workflow_dispatch:
+    tags:
+      - 'v*'
 
 jobs:
   build:
@@ -15,6 +12,12 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Run a one-line script
-        run: sh i.sh
+      - name: Build
+        run: g++ -DECB -DENC -std=c++17 -maes -msse4.1 Nist.cpp -o Nist
 
+      - name: Deliverable
+        uses: actions/upload-artifact@v2
+        with:
+          name: Deliverable
+          path: Nist
+          retention-days: 7
