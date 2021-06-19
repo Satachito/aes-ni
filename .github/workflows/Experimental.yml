@@ -1,0 +1,15 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Experimental
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: echo ${{ github.event.release.tag_name }}
