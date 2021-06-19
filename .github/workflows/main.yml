@@ -15,12 +15,12 @@ jobs:
       - run: echo ${GITHUB_REF##*/}
       
       - name: Build
-        run: g++ -DECB -DENC -std=c++17 -maes -msse4.1 Nist.cpp -o Nist
+        run: g++ -DECB -DENC -std=c++17 -maes -msse4.1 Nist.cpp -o ${GITHUB_REF##*/}
 
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: Nist
+          files: ${GITHUB_REF##*/}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
