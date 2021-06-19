@@ -11,7 +11,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-
+      
+      - uses: echo ${{ github.event.release.tag_name }}
+      
       - name: Build
         run: g++ -DECB -DENC -std=c++17 -maes -msse4.1 Nist.cpp -o Nist
 
