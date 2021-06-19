@@ -15,9 +15,10 @@ jobs:
       - name: Build
         run: g++ -DECB -DENC -std=c++17 -maes -msse4.1 Nist.cpp -o Nist
 
-      - name: Deliverable
-        uses: actions/upload-artifact@v2
+      - name: Release
+        uses: softprops/action-gh-release@v1
         with:
-          name: Deliverable
-          path: Nist
-          retention-days: 7
+          files: Nist
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
