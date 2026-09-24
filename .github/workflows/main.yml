@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       
       - run: echo ${{ github.ref_name }}
       
@@ -21,7 +21,7 @@ jobs:
         run: g++ -DECB -DENC -std=c++17 -maes -msse4.1 Nist.cpp -o ${{ github.ref_name }}
 
       - name: Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: ${{ github.ref_name }}
         env:
