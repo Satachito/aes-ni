@@ -113,7 +113,7 @@ Test(
 	cout << "The Cipher Key:\n";
 	cout << '\t' << EncodeHex( CIPHER_KEY, key_length / 8 ) << endl;
 	cout << "The Key Schedule:\n";
-	for ( auto i = 0; i < key.nr; i++ ) cout << '\t' << EncodeHex( &key.KEY[ i * 16 ], 16 ) << endl;
+	for ( auto i = 0; i <= key.nr; i++ ) cout << '\t' << EncodeHex( &key.KEY[ i * 16 ], 16 ) << endl;
 	cout << "The CIPHERTEXT:\n";
 	for ( auto i = 0; i < LENGTH / 16; i++ ) cout << '\t' << EncodeHex( &CIPHERTEXT[ i * 16 ], 16 ) << endl;
 	if ( LENGTH%16 ) cout << '\t' << EncodeHex( &CIPHERTEXT[ LENGTH / 16 * 16 ], LENGTH % 16 ) << endl;
@@ -125,7 +125,7 @@ Test(
 int
 main() {
 
-	if ( !Check_CPU_support_AES() ) throw "Cpu does not support AES instruction set. Bailing out.";
+	if ( !Check_CPU_support_AES() ) { cerr << "Cpu does not support AES instruction set. Bailing out." << endl; return 2; }
 
 	UI1		PLAINTEXT[ LENGTH ];
 
@@ -181,6 +181,6 @@ main() {
 		,	CBC256_EXPECTED
 		);
 		cerr << endl;
-	} catch ( const char* _ ) { cerr << _ << endl; }
+	} catch ( const char* _ ) { cerr << _ << endl; return 1; }
 }
 

@@ -18,7 +18,8 @@ HexNum( const char $ ) {
 inline vector< unsigned char >
 DecodeHex( const string& $ ) {
 	vector< unsigned char >	$$;
-	for ( auto _ = 0; _ < $.size(); _ += 2 ) $$.emplace_back( HexNum( $[ _ ] ) << 4 | HexNum( $[ _ + 1 ] ) );
+	if ( $.size() % 2 ) throw "Odd length hex string";
+	for ( size_t _ = 0; _ < $.size(); _ += 2 ) $$.emplace_back( HexNum( $[ _ ] ) << 4 | HexNum( $[ _ + 1 ] ) );
 	return $$;
 }
 

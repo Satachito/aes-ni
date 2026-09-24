@@ -11,6 +11,13 @@ using namespace std;
 
 #include	<unistd.h>
 
+#if	!( defined( ECB ) || defined( CBC ) || defined( CTR ) )
+	#error	"Define one of ECB, CBC or CTR"
+#endif
+#if	( defined( ECB ) || defined( CBC ) ) && !( defined( ENC ) || defined( DEC ) )
+	#error	"Define ENC or DEC"
+#endif
+
 void
 Main( int argc, char** argv ) {
 
@@ -26,7 +33,7 @@ Main( int argc, char** argv ) {
 
 	auto key	= DecodeHex( argv[ 1 ] ); 
 	auto IV		= DecodeHex( argv[ 2 ] ); 
-	auto size	= argc > 3 ? atoi( argv[ 3 ] ) : 0;
+	size_t size	= argc > 3 ? strtoull( argv[ 3 ], nullptr, 10 ) : 0;
 
 	if ( IV.size() != 16 ) {
 		cerr << "IV length must be 128 bits, length of the given IV(" << argv[ 2 ] << ") is " << IV.size() * 8 << endl;
@@ -146,7 +153,7 @@ Main( int argc, char** argv ) {
 	#endif
 #endif
 		auto nWrite = size && nBytes + nCrypto > size ? size - nBytes : nCrypto;
-		if ( write( 1, coded, nWrite ) != nWrite ) throw "Write Error";
+		if ( write( 1, coded, nWrite ) != (ssize_t)nWrite ) throw "Write Error";
 		nBytes += nWrite;
 
 //cerr << size << ':' << nRead << ':' << nCrypto << ':' << nWrite << endl;
@@ -157,6 +164,6 @@ Main( int argc, char** argv ) {
   
 int
 main( int argc, char** argv ) {
-	try { Main( argc, argv ); } catch ( const char* _ ) { cerr << _ << endl; }
+	try { Main( argc, argv ); } catch ( const char* _ ) { cerr << _ << endl; return 1; }
 }
 

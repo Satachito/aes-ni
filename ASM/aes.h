@@ -1,3 +1,5 @@
+#pragma once
+
 #if !defined (ALIGN16)
 # if defined (__GNUC__)
 # define ALIGN16 __attribute__ ( (aligned (16)))
@@ -96,11 +98,11 @@ AES_set_decrypt_key(
 ,	const int bits
 ,	AES_KEY *key
 ) {
-	int i,nr;;
+	int nr;
 	AES_KEY temp_key;
+	if (!userKey || !key) return -1;
 	__m128i *Key_Schedule = (__m128i*)key->KEY;
 	__m128i *Temp_Key_Schedule = (__m128i*)temp_key.KEY;
-	if (!userKey || !key) return -1;
 	if (AES_set_encrypt_key(userKey,bits,&temp_key) == -2) return -2;
 	nr = temp_key.nr;
 	key->nr = nr;

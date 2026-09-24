@@ -199,3 +199,5 @@ MAKE_RK256_b:
 	pxor	%xmm2			, %xmm3
 	ret
 
+
+.section	.note.GNU-stack,"",@progbits

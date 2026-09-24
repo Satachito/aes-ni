@@ -298,3 +298,5 @@ DEND_4:
 	ret
 
 
+
+.section	.note.GNU-stack,"",@progbits

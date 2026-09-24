@@ -47,12 +47,12 @@ AES_CTR_encrypt:
 	pinsrd	$1		, (%rcx), %xmm0
 	psrldq	$4		, %xmm0
 	movdqa	%xmm0	, %xmm2
-	pshufb	(LOAD_HIGH_BROADCAST_AND_BSWAP), %xmm2
-	paddq	(TWO_N_ONE), %xmm2
+	pshufb	LOAD_HIGH_BROADCAST_AND_BSWAP(%rip), %xmm2
+	paddq	TWO_N_ONE(%rip), %xmm2
 	movdqa	%xmm2	, %xmm1
-	paddq	(TWO_N_TWO), %xmm2
-	pshufb	(BSWAP_EPI_64), %xmm1
-	pshufb	(BSWAP_EPI_64), %xmm2
+	paddq	TWO_N_TWO(%rip), %xmm2
+	pshufb	BSWAP_EPI_64(%rip), %xmm1
+	pshufb	BSWAP_EPI_64(%rip), %xmm2
 
 	shrq	$2		, %r8
 	je		REMAINDER_4
@@ -73,24 +73,24 @@ LOOP_4:
 	shufpd	$2		, %xmm2	, %xmm13
 	shufpd	$0		, %xmm2	, %xmm14
 
-	pshufb	(BSWAP_EPI_64), %xmm1
-	pshufb	(BSWAP_EPI_64), %xmm2
+	pshufb	BSWAP_EPI_64(%rip), %xmm1
+	pshufb	BSWAP_EPI_64(%rip), %xmm2
 
 	movdqa	(%r9)	, %xmm8
 	movdqa	16(%r9)	, %xmm9
 	movdqa	32(%r9)	, %xmm10
 	movdqa	48(%r9)	, %xmm7
 
-	paddq	(FOUR), %xmm1
-	paddq	(FOUR), %xmm2
+	paddq	FOUR(%rip), %xmm1
+	paddq	FOUR(%rip), %xmm2
 
 	pxor	%xmm8	, %xmm11
 	pxor	%xmm8	, %xmm12
 	pxor	%xmm8	, %xmm13
 	pxor	%xmm8	, %xmm14
 
-	pshufb	(BSWAP_EPI_64), %xmm1
-	pshufb	(BSWAP_EPI_64), %xmm2
+	pshufb	BSWAP_EPI_64(%rip), %xmm1
+	pshufb	BSWAP_EPI_64(%rip), %xmm2
 
 	aesenc	%xmm9	, %xmm11
 	aesenc	%xmm9	, %xmm12
@@ -200,12 +200,12 @@ REMAINDER_4:
 	je	TAIL_4
 IN_LOOP_4:
 	movdqa	%xmm0	, %xmm11
-	pshufb	(BSWAP_EPI_64), %xmm0
+	pshufb	BSWAP_EPI_64(%rip), %xmm0
 	pxor	(%r9)	, %xmm11
-	paddq	(ONE), %xmm0
+	paddq	ONE(%rip), %xmm0
 	aesenc	16(%r9)	, %xmm11
 	aesenc	32(%r9)	, %xmm11
-	pshufb	(BSWAP_EPI_64), %xmm0
+	pshufb	BSWAP_EPI_64(%rip), %xmm0
 	aesenc	48(%r9)	, %xmm11
 	aesenc	64(%r9)	, %xmm11
 	aesenc	80(%r9)	, %xmm11
@@ -273,3 +273,5 @@ TAIL_LOOP_4:
 END_4:
 	ret
 
+
+.section	.note.GNU-stack,"",@progbits
