@@ -34,14 +34,11 @@ BSWAP_EPI_64:
 
 .globl	AES_CTR_encrypt
 AES_CTR_encrypt:
-	movq	%r8		, %r10
 	movl	8(%rsp)	, %r11d
-	shrq	$4		, %r8
-	shlq	$60		, %r10
-	je		NO_PARTS_4
-	addq	$1		, %r8
+	movq	%r8		, %rax
+	andq	$15		, %rax		#	bytes in the partial last block
+	shrq	$4		, %r8		#	whole blocks
 
-NO_PARTS_4:
 	movq	%r8		, %r10
 	shlq	$62		, %r10
 	shrq	$62		, %r10
@@ -178,10 +175,14 @@ LAST_4:
 	aesenclast	%xmm10	, %xmm13
 	aesenclast	%xmm10	, %xmm14
 
-	pxor	(%rdi)	, %xmm11
-	pxor	16(%rdi), %xmm12
-	pxor	32(%rdi), %xmm13
-	pxor	48(%rdi), %xmm14
+	movdqu	(%rdi)	, %xmm3
+	movdqu	16(%rdi), %xmm4
+	movdqu	32(%rdi), %xmm5
+	movdqu	48(%rdi), %xmm6
+	pxor	%xmm3	, %xmm11
+	pxor	%xmm4	, %xmm12
+	pxor	%xmm5	, %xmm13
+	pxor	%xmm6	, %xmm14
 
 	movdqu	%xmm11	, (%rsi)
 	movdqu	%xmm12	, 16(%rsi)
@@ -194,9 +195,9 @@ LAST_4:
 	addq	$64	,%rdi
 
 REMAINDER_4:
-	cmp		$0		, %r10
-	je	END_4
 	shufpd	$2		, %xmm1	, %xmm0
+	cmp		$0		, %r10
+	je	TAIL_4
 IN_LOOP_4:
 	movdqa	%xmm0	, %xmm11
 	pshufb	(BSWAP_EPI_64), %xmm0
@@ -225,12 +226,50 @@ IN_LOOP_4:
 	movdqa	224(%r9), %xmm2
 IN_LAST_4:
 	aesenclast	%xmm2	, %xmm11
-	pxor	(%rdi)	,%xmm11
+	movdqu	(%rdi)	, %xmm3
+	pxor	%xmm3	, %xmm11
 	movdqu	%xmm11	, (%rsi)
 	addq	$16		,%rdi
 	addq	$16		,%rsi
 	dec		%r10
 	jne		IN_LOOP_4
+
+TAIL_4:
+	cmp		$0		, %rax
+	je		END_4
+	movdqa	%xmm0	, %xmm11
+	pxor	(%r9)	, %xmm11
+	aesenc	16(%r9)	, %xmm11
+	aesenc	32(%r9)	, %xmm11
+	aesenc	48(%r9)	, %xmm11
+	aesenc	64(%r9)	, %xmm11
+	aesenc	80(%r9)	, %xmm11
+	aesenc	96(%r9)	, %xmm11
+	aesenc	112(%r9), %xmm11
+	aesenc	128(%r9), %xmm11
+	aesenc	144(%r9), %xmm11
+	movdqa	160(%r9), %xmm2
+	cmp		$12		, %r11d
+	jb		TAIL_LAST_4
+	aesenc	160(%r9), %xmm11
+	aesenc	176(%r9), %xmm11
+	movdqa	192(%r9), %xmm2
+	cmp		$14		, %r11d
+	jb		TAIL_LAST_4
+	aesenc	192(%r9), %xmm11
+	aesenc	208(%r9), %xmm11
+	movdqa	224(%r9), %xmm2
+TAIL_LAST_4:
+	aesenclast	%xmm2	, %xmm11
+	movdqu	%xmm11	, -16(%rsp)		#	keystream block in the red zone
+	xorq	%rcx	, %rcx
+TAIL_LOOP_4:
+	movb	(%rdi,%rcx)		, %dl
+	xorb	-16(%rsp,%rcx)	, %dl
+	movb	%dl		, (%rsi,%rcx)
+	incq	%rcx
+	cmpq	%rax	, %rcx
+	jb		TAIL_LOOP_4
 END_4:
 	ret
 

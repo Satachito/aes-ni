@@ -8,12 +8,7 @@
 //	)
 .globl	AES_ECB_encrypt
 AES_ECB_encrypt:
-	movq	%rdx		, %r10
-	shrq	$4			, %rdx
-	shlq	$60			, %r10
-	je		NO_PARTS_4
-	addq	$1			, %rdx
-NO_PARTS_4:
+	shrq	$4			, %rdx		#	whole blocks only; trailing length % 16 bytes are not processed
 	movq	%rdx		, %r10
 	shlq	$62			, %r10
 	shrq	$62			, %r10
@@ -163,12 +158,7 @@ END_4:
 //	)
 .globl	AES_ECB_decrypt
 AES_ECB_decrypt:
-	movq	%rdx		, %r10
-	shrq	$4			, %rdx
-	shlq	$60			, %r10
-	je		DNO_PARTS_4
-	addq	$1			, %rdx
-DNO_PARTS_4:
+	shrq	$4			, %rdx		#	whole blocks only; trailing length % 16 bytes are not processed
 	movq	%rdx		, %r10
 	shlq	$62			, %r10
 	shrq	$62			, %r10

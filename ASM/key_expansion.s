@@ -61,7 +61,7 @@ PREPARE_ROUNDKEY_128:
 .globl	AES_192_Key_Expansion
 AES_192_Key_Expansion:
 	movdqu	(%rdi)			, %xmm1
-	movdqu	16(%rdi)		, %xmm3
+	movq	16(%rdi)		, %xmm3		#	192-bit key: only 8 bytes remain
 	movdqa	%xmm1			, (%rsi)
 	movdqa	%xmm3			, %xmm5
 	aeskeygenassist	$0x1	, %xmm3	, %xmm2

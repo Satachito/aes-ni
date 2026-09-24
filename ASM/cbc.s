@@ -9,16 +9,13 @@
 
 .globl	AES_CBC_encrypt
 AES_CBC_encrypt:
-	movq	%rcx		, %r10
-	shrq	$4			, %rcx
-	shlq	$60			, %r10
-	je		NO_PARTS
-	addq	$1			, %rcx
-NO_PARTS:
+	shrq	$4			, %rcx		#	whole blocks only; trailing length % 16 bytes are not processed
+	je		END
 	subq	$16			, %rsi
-	movdqa	(%rdx)		, %xmm1
+	movdqu	(%rdx)		, %xmm1
 LOOP:
-	pxor	(%rdi)		, %xmm1
+	movdqu	(%rdi)		, %xmm3
+	pxor	%xmm3		, %xmm1
 	pxor	(%r8)		, %xmm1
 	addq	$16			, %rsi
 	addq	$16			, %rdi
@@ -47,6 +44,7 @@ LAST:
 	aesenclast	%xmm2	, %xmm1
 	movdqu	%xmm1		,(%rsi)
 	jne		LOOP
+END:
 	ret
 
 //	AES_CBC_decrypt	(
@@ -59,12 +57,7 @@ LAST:
 //	)
 .globl	AES_CBC_decrypt
 AES_CBC_decrypt:
-	movq	%rcx		, %r10
-	shrq	$4			, %rcx
-	shlq	$60			, %r10
-	je		DNO_PARTS_4
-	addq	$1			, %rcx
-DNO_PARTS_4:
+	shrq	$4			, %rcx		#	whole blocks only; trailing length % 16 bytes are not processed
 	movq	%rcx		, %r10
 	shlq	$62			, %r10
 	shrq	$62			, %r10
