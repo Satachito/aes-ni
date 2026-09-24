@@ -35,7 +35,7 @@ BSWAP_EPI_64:
 .globl	AES_CTR_encrypt
 AES_CTR_encrypt:
 	movq	%r8		, %r10
-	movl	8(%rsp)	, %r12d
+	movl	8(%rsp)	, %r11d
 	shrq	$4		, %r8
 	shlq	$60		, %r10
 	je		NO_PARTS_4
@@ -133,7 +133,7 @@ LOOP_4:
 	movdqa	128(%r9), %xmm8
 	movdqa	144(%r9), %xmm9
 	movdqa	160(%r9), %xmm10
-	cmp		$12		, %r12d
+	cmp		$12		, %r11d
 
 	aesenc	%xmm8	, %xmm11
 	aesenc	%xmm8	, %xmm12
@@ -147,7 +147,7 @@ LOOP_4:
 	movdqa	160(%r9), %xmm8
 	movdqa	176(%r9), %xmm9
 	movdqa	192(%r9), %xmm10
-	cmp		$14		, %r12d
+	cmp		$14		, %r11d
 
 	aesenc	%xmm8	, %xmm11
 	aesenc	%xmm8	, %xmm12
@@ -213,12 +213,12 @@ IN_LOOP_4:
 	aesenc	128(%r9), %xmm11
 	aesenc	144(%r9), %xmm11
 	movdqa	160(%r9), %xmm2
-	cmp		$12		, %r12d
+	cmp		$12		, %r11d
 	jb		IN_LAST_4
 	aesenc	160(%r9), %xmm11
 	aesenc	176(%r9), %xmm11
 	movdqa	192(%r9), %xmm2
-	cmp	$14	, %r12d
+	cmp	$14	, %r11d
 	jb		IN_LAST_4
 	aesenc	192(%r9), %xmm11
 	aesenc	208(%r9), %xmm11

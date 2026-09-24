@@ -12,15 +12,14 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       
-      - run: echo ${GITHUB_REF##*/}
+      - run: echo ${{ github.ref_name }}
       
       - name: Build
-        run: g++ -DECB -DENC -std=c++17 -maes -msse4.1 Nist.cpp -o ${GITHUB_REF##*/}
+        run: g++ -DECB -DENC -std=c++17 -maes -msse4.1 Nist.cpp -o ${{ github.ref_name }}
 
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: ${GITHUB_REF##*/}
+          files: ${{ github.ref_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
