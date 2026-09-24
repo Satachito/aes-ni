@@ -12,6 +12,9 @@ KEY_SCHEDULE {
 	unsigned int nr;
 } AES_KEY;
 
+//	Length (in bytes) handling:
+//		ECB / CBC	:	only whole 16-byte blocks are processed; trailing length % 16 bytes are left untouched.
+//		CTR			:	any length; the partial last block is handled without reading or writing past the buffers.
 extern "C" {
 	void AES_128_Key_Expansion( const unsigned char*, unsigned char* );
 

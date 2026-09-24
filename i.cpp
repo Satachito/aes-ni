@@ -28,6 +28,11 @@ Main( int argc, char** argv ) {
 	auto IV		= DecodeHex( argv[ 2 ] ); 
 	auto size	= argc > 3 ? atoi( argv[ 3 ] ) : 0;
 
+	if ( IV.size() != 16 ) {
+		cerr << "IV length must be 128 bits, length of the given IV(" << argv[ 2 ] << ") is " << IV.size() * 8 << endl;
+		exit( 5 );
+	}
+
 	auto nBits	= key.size() * 8;
 	auto Nk		= nBits / 32;
 	auto Nr		= Nk + 6;
@@ -74,7 +79,13 @@ Main( int argc, char** argv ) {
 
 	while ( true ) {
 		unsigned char	buffer[ BUF_SIZE ];
-		auto nRead = (size_t)read( 0, buffer, BUF_SIZE );
+		size_t nRead = 0;
+		while ( nRead < BUF_SIZE ) {	//	read() may return less than requested (e.g. pipes)
+			auto $ = read( 0, buffer + nRead, BUF_SIZE - nRead );
+			if ( $ < 0 ) throw "Read Error";
+			if ( $ == 0 ) break;
+			nRead += $;
+		}
 		if ( !nRead ) break;
 		auto nBlocks = ( nRead + 15 ) / 16;
 		auto nCrypto = nBlocks * 16;

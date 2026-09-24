@@ -90,7 +90,7 @@ inline void
 AES_192_Key_Expansion( __m128i* userkey, __m128i* key ) {
 	__m128i temp1, temp2, temp3;
 	temp1 = _mm_loadu_si128( userkey );
-	temp3 = _mm_loadu_si128( userkey + 1 );
+	temp3 = _mm_loadl_epi64( userkey + 1 );	//	192-bit key: only 8 bytes remain
 	key[  0 ] = temp1;
 	key[  1 ] = temp3;
 	temp2 = _mm_aeskeygenassist_si128( temp3, 0x1 );
