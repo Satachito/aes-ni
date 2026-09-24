@@ -287,6 +287,88 @@ CTR_128_INTEL() {
 }
 
 
+//	AES_CTR_stream: the NIST F.5.1 vector, fed in uneven pieces, must give the same ciphertext
+void
+CTR_128_STREAM() {
+
+	auto	Nr = 10;
+
+	ALIGN16	__m128i
+	cryptKey[ Nr + 1 ];
+	AES_128_Key_Expansion( (__m128i*)AES128_TEST_KEY, cryptKey );
+
+	UI1
+	iv[] = { 0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff };
+	UI1
+	expected[] = {
+		0x87, 0x4d, 0x61, 0x91, 0xb6, 0x20, 0xe3, 0x26, 0x1b, 0xef, 0x68, 0x64, 0x99, 0x0d, 0xb6, 0xce
+	,	0x98, 0x06, 0xf6, 0x6b, 0x79, 0x70, 0xfd, 0xff, 0x86, 0x17, 0x18, 0x7b, 0xb9, 0xff, 0xfd, 0xff
+	,	0x5a, 0xe4, 0xdf, 0x3e, 0xdb, 0xd5, 0xd3, 0x5e, 0x5b, 0x4f, 0x09, 0x02, 0x0d, 0xb0, 0x3e, 0xab
+	,	0x1e, 0x03, 0x1d, 0xda, 0x2f, 0xbe, 0x03, 0xd1, 0x79, 0x21, 0x70, 0xa0, 0xf3, 0x00, 0x9c, 0xee
+	};
+	size_t
+	pieces[][ 8 ] = {
+		{ 64 }
+	,	{ 1, 15, 16, 32 }
+	,	{ 5, 0, 30, 29 }
+	,	{ 17, 17, 17, 13 }
+	,	{ 3, 7, 11, 13, 17, 13 }
+	};
+	for ( auto& piece: pieces ) {
+		AES_CTR_stream	stream;
+		AES_CTR_stream_init( &stream, iv, 16, cryptKey, Nr );
+		UI1
+		encoded[ 64 ];
+		size_t	offset = 0;
+		for ( auto size: piece ) {
+			if ( offset + size > 64 ) size = 64 - offset;
+			AES_CTR_stream_crypto( &stream, plain + offset, encoded + offset, size );
+			offset += size;
+		}
+		if ( offset != 64 ) throw "Bad test pieces.";
+		for ( auto _ = 0; _ < 64; _++ ) if ( encoded[ _ ] != expected[ _ ] ) throw "Hay differencia en stream.";
+	}
+
+	//	8-byte IV: bytes 8 to 15 of the counter block start at zero
+	UI1
+	iv16[ 16 ] = { 0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7 };
+	UI1		a[ 40 ], b[ 40 ];
+	AES_CTR_stream	s8, s16;
+	AES_CTR_stream_init( &s8 , iv16,  8, cryptKey, Nr );
+	AES_CTR_stream_init( &s16, iv16, 16, cryptKey, Nr );
+	AES_CTR_stream_crypto( &s8 , plain, a, 40 );
+	AES_CTR_stream_crypto( &s16, plain, b, 40 );
+	for ( auto _ = 0; _ < 40; _++ ) if ( a[ _ ] != b[ _ ] ) throw "Hay differencia en 8-byte IV.";
+}
+
+//	CENC (ISO/IEC 23001-7): bytes 8 to 15 are a 64-bit counter that wraps; bytes 0 to 7 never change
+void
+CTR_128_WRAP() {
+
+	auto	Nr = 10;
+
+	ALIGN16	__m128i
+	cryptKey[ Nr + 1 ];
+	AES_128_Key_Expansion( (__m128i*)AES128_TEST_KEY, cryptKey );
+
+	UI1
+	iv[] = { 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe };
+	ALIGN16 __m128i
+	COUNTER = _mm_loadu_si128( (__m128i*)iv );
+	UI1		encoded[ 64 ];
+	AES_CTR_crypto( plain, encoded, &COUNTER, 4, cryptKey, Nr );
+
+	UI1
+	expectedCounter[] = { 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02 };
+	for ( auto _ = 0; _ < 16; _++ ) if ( ((UI1*)&COUNTER)[ _ ] != expectedCounter[ _ ] ) throw "Hay differencia en counter.";
+
+	//	block 2 must use counter ...8888 0000000000000000
+	UI1		block[ 16 ] = { 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88 };
+	UI1		keystream[ 16 ];
+	AES_ECB_encrypto( block, keystream, 1, cryptKey, Nr );
+	for ( auto _ = 0; _ < 16; _++ ) if ( ( plain[ 32 + _ ] ^ keystream[ _ ] ) != encoded[ 32 + _ ] ) throw "Hay differencia en wrap.";
+}
+
 int
 main() {
 	try {
@@ -299,6 +381,10 @@ main() {
 		cerr << "CTR 128 OK" << endl;
 		CTR_128_INTEL();
 		cerr << "CTR 128 INTEL OK" << endl;
+		CTR_128_STREAM();
+		cerr << "CTR 128 STREAM OK" << endl;
+		CTR_128_WRAP();
+		cerr << "CTR 128 WRAP OK" << endl;
 	} catch ( const char* _ ) { cerr << _ << endl; return 1; }
 }
 

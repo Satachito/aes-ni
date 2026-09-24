@@ -14,6 +14,7 @@
 #include	<wmmintrin.h>
 #include	<emmintrin.h>
 #include	<smmintrin.h>
+#include	<cstddef>
 
 inline __m128i
 AES_128_ASSIST( __m128i temp1, __m128i temp2 ) {
@@ -305,6 +306,23 @@ AES_CBC_decrypto(
 	}
 }
 
+//	CTR counter block increment as specified by ISO/IEC 23001-7 (CENC):
+//	bytes 8 to 15 are a 64-bit big-endian block counter that wraps around; bytes 0 to 7 never change.
+inline __m128i
+AES_CTR_increment( __m128i counter ) {
+	const __m128i	ONE	= _mm_set_epi64x( 0, 1 );
+	const __m128i	SWP	= _mm_set_epi8( 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 );	//	byte reverse: bytes 8 to 15 become the low 64-bit lane
+	return _mm_shuffle_epi8( _mm_add_epi64( _mm_shuffle_epi8( counter, SWP ), ONE ), SWP );
+}
+
+inline __m128i
+AES_encrypto_block( __m128i block, __m128i* key, int Nr ) {
+	block = _mm_xor_si128( block, key[ 0 ] );
+	for ( auto j = 1; j < Nr; j++ ) block = _mm_aesenc_si128( block, key[ j ] );
+	return _mm_aesenclast_si128( block, key[ Nr ] );
+}
+
+//	Whole blocks only: reads and writes nBlocks * 16 bytes. For arbitrary lengths use AES_CTR_stream.
 inline void
 AES_CTR_crypto(
 	unsigned char*	in
@@ -314,24 +332,72 @@ AES_CTR_crypto(
 ,	__m128i*		key
 ,	int				Nr
 ) {
-
-	static __m128i	ONE	= _mm_set_epi8( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 );
-	static __m128i	SWP	= _mm_set_epi8( 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 );
-
 	for ( auto i = 0; i < nBlocks; i++ ) {
-		__m128i $ = _mm_xor_si128( *counter, key[ 0 ] );
-		for ( auto j = 1; j < Nr; j++ ) $ = _mm_aesenc_si128( $, key[ j ] );
 		_mm_storeu_si128(
 			(__m128i*)out + i
-		,	_mm_xor_si128( 
-				_mm_aesenclast_si128( $, key[ Nr ] )
+		,	_mm_xor_si128(
+				AES_encrypto_block( *counter, key, Nr )
 			,	_mm_loadu_si128( (__m128i*)in + i )
 			)
 		);
-		//	128-bit big-endian increment: carry from the low 64 bits into the high 64 bits
-		__m128i _ = _mm_add_epi64( _mm_shuffle_epi8( *counter, SWP ), ONE );
-		_ = _mm_sub_epi64( _, _mm_slli_si128( _mm_cmpeq_epi64( _, _mm_setzero_si128() ), 8 ) );
-		*counter = _mm_shuffle_epi8( _, SWP );
+		*counter = AES_CTR_increment( *counter );
+	}
+}
+
+//	Byte-granular CTR stream, like Bento4's AP4_CtrStreamCipher / Shaka Packager's AesCtrEncryptor.
+//	Successive AES_CTR_stream_crypto calls continue the key stream at the exact byte where the previous call
+//	stopped, so the encrypted ranges of CENC subsamples can be passed one by one.
+//	Call AES_CTR_stream_init with each sample's IV.
+struct AES_CTR_stream {
+	ALIGN16 __m128i	counter;		//	counter block of the next key stream block
+	ALIGN16 __m128i	keystream;		//	current key stream block
+	unsigned		used;			//	bytes of keystream already consumed (16: none left)
+	__m128i*		key;
+	int				Nr;
+};
+
+//	iv: 8 bytes (bytes 8 to 15 of the counter block start at zero) or 16 bytes
+inline void
+AES_CTR_stream_init(
+	AES_CTR_stream*			$
+,	const unsigned char*	iv
+,	int						ivSize
+,	__m128i*				key
+,	int						Nr
+) {
+	unsigned char	_[ 16 ] = { 0 };
+	for ( auto i = 0; i < ivSize && i < 16; i++ ) _[ i ] = iv[ i ];
+	$->counter		= _mm_loadu_si128( (__m128i*)_ );
+	$->keystream	= _mm_setzero_si128();
+	$->used			= 16;
+	$->key			= key;
+	$->Nr			= Nr;
+}
+
+inline void
+AES_CTR_stream_crypto(
+	AES_CTR_stream*			$
+,	const unsigned char*	in
+,	unsigned char*			out
+,	size_t					size
+) {
+	//	rest of the current key stream block
+	while ( size && $->used < 16 ) {
+		*out++ = *in++ ^ ( (unsigned char*)&$->keystream )[ $->used++ ];
+		size--;
+	}
+	//	whole blocks
+	auto nBlocks = size / 16;
+	AES_CTR_crypto( (unsigned char*)in, out, &$->counter, (int)nBlocks, $->key, $->Nr );
+	in		+= nBlocks * 16;
+	out		+= nBlocks * 16;
+	size	-= nBlocks * 16;
+	//	partial last block: keep the rest of its key stream for the next call
+	if ( size ) {
+		$->keystream	= AES_encrypto_block( $->counter, $->key, $->Nr );
+		$->counter		= AES_CTR_increment( $->counter );
+		$->used			= 0;
+		while ( size-- ) *out++ = *in++ ^ ( (unsigned char*)&$->keystream )[ $->used++ ];
 	}
 }
 
