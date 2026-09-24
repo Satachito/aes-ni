@@ -1,3 +1,5 @@
+#pragma once
+
 //	Apr. 2021 Written by Satoru Ogura.	
 //	https://www.intel.com/content/dam/doc/white-paper/advanced-encryption-standard-new-instructions-set-paper.pdf
 
@@ -326,7 +328,10 @@ AES_CTR_crypto(
 			,	_mm_loadu_si128( (__m128i*)in + i )
 			)
 		);
-		*counter = _mm_shuffle_epi8( _mm_add_epi64( _mm_shuffle_epi8( *counter, SWP ), ONE ), SWP );
+		//	128-bit big-endian increment: carry from the low 64 bits into the high 64 bits
+		__m128i _ = _mm_add_epi64( _mm_shuffle_epi8( *counter, SWP ), ONE );
+		_ = _mm_sub_epi64( _, _mm_slli_si128( _mm_cmpeq_epi64( _, _mm_setzero_si128() ), 8 ) );
+		*counter = _mm_shuffle_epi8( _, SWP );
 	}
 }
 

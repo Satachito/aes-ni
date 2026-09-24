@@ -216,13 +216,13 @@ CTR_128_INTEL() {
 	for ( ; j < 64 / 16; j++ ) {
 		_mm_storeu_si128(
 			&((__m128i*)PLAINTEXT)[j]
-		,	((__m128i*)AES_TEST_VECTOR)[j%4]
+		,	((__m128i*)AES_TEST_VECTOR)[j%2]
 		);
 	}
 	if ( 64 % 16 ) {
 		_mm_storeu_si128(
 			&((__m128i*)PLAINTEXT)[j]
-		,	((__m128i*)AES_TEST_VECTOR)[j%4]
+		,	((__m128i*)AES_TEST_VECTOR)[j%2]
 		);
 	}
 
@@ -288,7 +288,7 @@ CTR_128_INTEL() {
 
 
 int
-main( int argc, char** argv ) {
+main() {
 	try {
 		if ( !Check_CPU_support_AES() ) throw "Cpu does not support AES instruction set. Bailing out.";
 		ECB_128();
@@ -299,6 +299,6 @@ main( int argc, char** argv ) {
 		cerr << "CTR 128 OK" << endl;
 		CTR_128_INTEL();
 		cerr << "CTR 128 INTEL OK" << endl;
-	} catch ( const char* _ ) { cerr << _ << endl; }
+	} catch ( const char* _ ) { cerr << _ << endl; return 1; }
 }
 
